@@ -38,6 +38,21 @@ Theta2_grad = zeros(size(Theta2));
 %         variable J. After implementing Part 1, you can verify that your
 %         cost function computation is correct by verifying the cost
 %         computed in ex4.m
+
+y_exp = zeros(m, num_labels);
+for i = 1:m
+  y_exp(i, y(i)) = 1;
+endfor
+
+a_1 = [ones(m, 1) X]; % add the bias node
+z_2 = a_1 * Theta1';
+a_2 = [ones(m, 1) sigmoid(z_2)]; % add the bias node
+a_3 = sigmoid(a_2 * Theta2'); 
+% Cost from outputs
+J = 1 / m * sum(sum(-1 * y_exp .* log(a_3) - (1 - y_exp) .* log(1 - a_3)));
+% Cost from regularization
+J = J + lambda / 2 / m * (sum(sum(Theta1(:, 2:end) .^ 2)) + sum(sum(Theta2(:, 2:end) .^ 2))); 
+
 %
 % Part 2: Implement the backpropagation algorithm to compute the gradients
 %         Theta1_grad and Theta2_grad. You should return the partial derivatives of
@@ -54,6 +69,21 @@ Theta2_grad = zeros(size(Theta2));
 %               over the training examples if you are implementing it for the 
 %               first time.
 %
+
+del_3 = a_3 - y_exp;
+
+for i = 1:m
+  Theta2_grad += del_3(i, :)' * a_2(i, :);
+  del_2 = (Theta2' * del_3(i,:)') .* sigmoidGradient([1; z_2(i, :)']);
+  Theta1_grad += del_2(2:end) * a_1(i, :);
+endfor
+
+Theta1_grad += lambda * [zeros(size(Theta1, 1), 1) Theta1(:, 2:end)];
+Theta2_grad += lambda * [zeros(size(Theta2, 1), 1) Theta2(:, 2:end)];
+
+Theta1_grad /= m;
+Theta2_grad /= m;
+
 % Part 3: Implement regularization with the cost function and gradients.
 %
 %         Hint: You can implement this around the code for
